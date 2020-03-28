@@ -1,7 +1,7 @@
 from datetime import datetime
 from .util import *
 
-IGN_COLLECTION_NAME = 'IGN'
+IGN_COLLECTION_NAME = 'ign'
 
 
 @bot.group(help='IGN Commands')

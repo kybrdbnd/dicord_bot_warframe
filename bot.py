@@ -21,4 +21,10 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
+@bot.command(name='say')
+async def say(ctx):
+    channel = bot.get_channel(501295892536492054)
+    await channel.send("HUNTER THE SANCTUARY CAN GO WITHOUT YOU !!!!!")
+
+
 bot.run(TOKEN)
