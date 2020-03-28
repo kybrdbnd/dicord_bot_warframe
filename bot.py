@@ -23,7 +23,7 @@ async def on_message(message):
 
 @bot.command(name='say')
 async def say(ctx):
-    channel = bot.get_channel(501295892536492054)
+    channel = bot.get_channel(int(GENERAL_CHANNEL_ID))
     await channel.send("HUNTER THE SANCTUARY CAN GO WITHOUT YOU !!!!!")
 
 

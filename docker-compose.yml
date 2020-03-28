@@ -1,0 +1,8 @@
+version: '3'
+services:
+  warframe_bot:
+    volumes:
+      - .:/app
+    build:
+      context: .
+    image: warframe-india
