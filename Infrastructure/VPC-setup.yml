@@ -27,26 +27,6 @@ Parameters:
     Type: String
     Default: 10.0.0.0/16
 
-  PrivateSubnet1CIDR:
-    Description: IP range (CIDR notation) for the private subnet in the first Availability Zone
-    Type: String
-    Default: 10.0.41.0/24
-
-  PrivateSubnet2CIDR:
-    Description: IP range (CIDR notation) for the private subnet in the second Availability Zone
-    Type: String
-    Default: 10.0.42.0/24
-
-  GatewayPublicSubnet1CIDR:
-    Description: IP range (CIDR notation) for the gateway public subnet in the first Availability Zone
-    Type: String
-    Default: 10.0.21.0/24
-
-  GatewayPublicSubnet2CIDR:
-    Description: IP range (CIDR notation) for the gateway public subnet in the second Availability Zone
-    Type: String
-    Default: 10.0.22.0/24
-
   DiscordBotPublicSubnet1CIDR:
     Description: IP range (CIDR notation) for the app public subnet in the first Availability Zone
     Type: String
@@ -77,25 +57,10 @@ Resources:
           Action: 'ecs:*'
           Resource: '*'
         - Effect: 'Allow'
-          Action: 'elasticloadbalancing:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'lambda:*'
-          Resource: '*'
-        - Effect: 'Allow'
           Action: 'logs:*'
           Resource: '*'
         - Effect: 'Allow'
           Action: 'ssm:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 's3:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'states:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'application-autoscaling:*'
           Resource: '*'
         - Effect: 'Allow'
           Action: 'cloudwatch:*'
@@ -108,27 +73,6 @@ Resources:
           Resource: '*'
         - Effect: 'Allow'
           Action: 'iam:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'sns:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'sagemaker:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'sqs:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'cognito-idp:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'waf-regional:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'codepipeline:*'
-          Resource: '*'
-        - Effect: 'Allow'
-          Action: 'es:*'
           Resource: '*'
       Roles:
         - Ref: 'RootRole'
@@ -148,9 +92,7 @@ Resources:
             Principal:
               Service:
                 - 'ec2.amazonaws.com'
-                - 'vpc-flow-logs.amazonaws.com'
-                - 'lambda.amazonaws.com'
-                - 'sagemaker.amazonaws.com'
+                - 'ecs-tasks.amazonaws.com'
             Action:
               - 'sts:AssumeRole'
       Path: '/'
@@ -186,34 +128,6 @@ Resources:
     Properties:
       InternetGatewayId: !Ref 'InternetGateway'
       VpcId: !Ref 'VPC'
-
-  PrivateSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'VPC'
-      AvailabilityZone: !Select
-        - 0
-        - !GetAZs ''
-      CidrBlock: !Ref 'PrivateSubnet1CIDR'
-      MapPublicIpOnLaunch: false
-      Tags:
-        -
-          Key: Name
-          Value: !Sub '${EnvironmentName}.private.az-1'
-
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref 'VPC'
-      AvailabilityZone: !Select
-        - 1
-        - !GetAZs ''
-      CidrBlock: !Ref 'PrivateSubnet2CIDR'
-      MapPublicIpOnLaunch: false
-      Tags:
-        -
-          Key: Name
-          Value: !Sub '${EnvironmentName}.private.az-2'
 
   DiscordPublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -271,17 +185,6 @@ Resources:
           ToPort: '443'
           CidrIp: 0.0.0.0/0
 
-  NatGateway1EIP:
-    Type: AWS::EC2::EIP
-    DependsOn: InternetGatewayAttachment
-    Properties:
-      Domain: vpc
-
-  NatGateway1:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt NatGateway1EIP.AllocationId
-      SubnetId: !Ref 'DiscordPublicSubnet1'
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -345,25 +248,6 @@ Outputs:
       - - !Ref 'DiscordBotPublicSubnet1CIDR'
         - !Ref 'DiscordBotPublicSubnet2CIDR'
 
-  PrivateSubnets:
-    Description: A list of the private subnets
-    Value: !Join
-      - ','
-      - - !Ref 'PrivateSubnet1'
-        - !Ref 'PrivateSubnet2'
-
-  PrivateSubnet1:
-    Description: A reference to the service private subnet in the 1st Availability Zone
-    Value: !Ref 'PrivateSubnet1'
-    Export:
-      Name: !Sub '${AWS::StackName}-PrivateSubnet1'
-
-  PrivateSubnet2:
-    Description: A reference to the service private subnet in the 2nd Availability Zone
-    Value: !Ref 'PrivateSubnet2'
-    Export:
-      Name: !Sub '${AWS::StackName}-PrivateSubnet2'
-
   DiscordBotPublicSubnet1:
     Description: A reference to the discord bot public subnet in the 1st Availability Zone
     Value: !Ref 'DiscordPublicSubnet1'
@@ -387,9 +271,3 @@ Outputs:
     Value: !Ref 'EC2InstanceProfile'
     Export:
       Name: !Sub '${AWS::StackName}-EC2InstanceProfile'
-
-  NATEIPs:
-    Description: NAT Elastic IPs
-    Value: !Join
-      - ','
-      - - !Ref 'NatGateway1EIP'
