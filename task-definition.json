@@ -1,10 +1,10 @@
 {
-    "family": "warframe",
+    "family": "warframe-bot",
     "networkMode": "bridge",
     "executionRoleArn": "arn:aws:iam::580345014258:role/ap-south-1-discord",
     "containerDefinitions": [
         {
-            "name": "webapp",
+            "name": "warframe-bot",
             "image": "580345014258.dkr.ecr.ap-south-1.amazonaws.com/warframe_bot:latest",
             "cpu": 256,
             "memory": 128,
