@@ -1,0 +1,395 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  This template deploys a VPC for dev env, with a public and private subnets spread
+  across 2 Availability Zones. It deploys/creates IAM Role, an Internet Gateway,
+  2 NAT Gateway each pair for services and lambda with a default route on the public subnets,
+  SG's and Routing Table.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+    Default: 'discord.bot'
+
+  EnvironmentName1:
+    Description: An environment name that will be prefixed to ssm
+    Type: String
+    Default: 'discord'
+
+  IAMRoleName:
+    Description: IAM Role for Automatic Environment Setup
+    Type: String
+    Default: 'discord'
+
+  VpcCIDR:
+    Description: IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.0.0.0/16
+
+  PrivateSubnet1CIDR:
+    Description: IP range (CIDR notation) for the private subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.41.0/24
+
+  PrivateSubnet2CIDR:
+    Description: IP range (CIDR notation) for the private subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.42.0/24
+
+  GatewayPublicSubnet1CIDR:
+    Description: IP range (CIDR notation) for the gateway public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.21.0/24
+
+  GatewayPublicSubnet2CIDR:
+    Description: IP range (CIDR notation) for the gateway public subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.22.0/24
+
+  DiscordBotPublicSubnet1CIDR:
+    Description: IP range (CIDR notation) for the app public subnet in the first Availability Zone
+    Type: String
+    Default: 10.0.31.0/24
+
+  DiscordBotPublicSubnet2CIDR:
+    Description: IP range (CIDR notation) for the app public subnet in the second Availability Zone
+    Type: String
+    Default: 10.0.32.0/24
+
+
+Resources:
+
+  RolePolicies:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: 'AWS-Services'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: 'Allow'
+          Action: 'ec2:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'ecr:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'ecs:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'elasticloadbalancing:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'lambda:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'logs:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'ssm:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 's3:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'states:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'application-autoscaling:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'cloudwatch:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'ssmmessages:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'ec2messages:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'iam:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'sns:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'sagemaker:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'sqs:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'cognito-idp:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'waf-regional:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'codepipeline:*'
+          Resource: '*'
+        - Effect: 'Allow'
+          Action: 'es:*'
+          Resource: '*'
+      Roles:
+        - Ref: 'RootRole'
+
+  RootRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Join
+        - '-'
+        - - !Ref 'AWS::Region'
+          - !Ref 'IAMRoleName'
+
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service:
+                - 'ec2.amazonaws.com'
+                - 'vpc-flow-logs.amazonaws.com'
+                - 'lambda.amazonaws.com'
+                - 'sagemaker.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Path: '/'
+
+  EC2InstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: '/'
+      Roles:
+        - !Ref 'RootRole'
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref 'VpcCIDR'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        -
+          Key: Name
+          Value: !Sub '${EnvironmentName}.vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        -
+          Key: Name
+          Value: !Sub '${EnvironmentName}.gateway'
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref 'InternetGateway'
+      VpcId: !Ref 'VPC'
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'VPC'
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      CidrBlock: !Ref 'PrivateSubnet1CIDR'
+      MapPublicIpOnLaunch: false
+      Tags:
+        -
+          Key: Name
+          Value: !Sub '${EnvironmentName}.private.az-1'
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'VPC'
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
+      CidrBlock: !Ref 'PrivateSubnet2CIDR'
+      MapPublicIpOnLaunch: false
+      Tags:
+        -
+          Key: Name
+          Value: !Sub '${EnvironmentName}.private.az-2'
+
+  DiscordPublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'VPC'
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      CidrBlock: !Ref 'DiscordBotPublicSubnet1CIDR'
+      MapPublicIpOnLaunch: true
+      Tags:
+        -
+          Key: Name
+          Value: !Sub '${EnvironmentName}.public.bot.az-1'
+
+  DiscordPublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref 'VPC'
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ''
+      CidrBlock: !Ref 'DiscordBotPublicSubnet2CIDR'
+      MapPublicIpOnLaunch: true
+      Tags:
+        -
+          Key: Name
+          Value: !Sub '${EnvironmentName}.public.bot.az-2'
+
+  DiscordBotSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${EnvironmentName}.sg.bot'
+      GroupDescription: Security group for discord bot
+      VpcId: !Ref 'VPC'
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}.sg.bot'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '443'
+          ToPort: '443'
+          CidrIp: 0.0.0.0/0
+
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
+
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGateway1EIP.AllocationId
+      SubnetId: !Ref 'DiscordPublicSubnet1'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref 'VPC'
+      Tags:
+      -
+        Key: Name
+        Value: !Sub '${EnvironmentName}.public.routes'
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  DiscordBotPublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref 'PublicRouteTable'
+      SubnetId: !Ref 'DiscordPublicSubnet1'
+
+  DiscordBotSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref 'PublicRouteTable'
+      SubnetId: !Ref 'DiscordPublicSubnet2'
+
+
+Outputs:
+  EnvironmentName:
+    Description: Environment Name
+    Value: !Ref 'EnvironmentName'
+    Export:
+      Name: !Sub '${AWS::StackName}-EnvName'
+
+  IAMRole:
+    Description: IAM Role for the automation process
+    Value: !Ref 'RootRole'
+    Export:
+      Name: !Sub '${AWS::StackName}-IAMRole'
+
+  IAMRoleArn:
+    Description: IAM Role arn
+    Value: !GetAtt 'RootRole.Arn'
+    Export:
+      Name: !Sub '${AWS::StackName}-IAMRoleARN'
+
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref 'VPC'
+    Export:
+      Name: !Sub '${AWS::StackName}-VPC'
+
+  PublicSubnets:
+    Description: A list of the public subnets
+    Value: !Join
+      - ','
+      - - !Ref 'DiscordBotPublicSubnet1CIDR'
+        - !Ref 'DiscordBotPublicSubnet2CIDR'
+
+  PrivateSubnets:
+    Description: A list of the private subnets
+    Value: !Join
+      - ','
+      - - !Ref 'PrivateSubnet1'
+        - !Ref 'PrivateSubnet2'
+
+  PrivateSubnet1:
+    Description: A reference to the service private subnet in the 1st Availability Zone
+    Value: !Ref 'PrivateSubnet1'
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnet1'
+
+  PrivateSubnet2:
+    Description: A reference to the service private subnet in the 2nd Availability Zone
+    Value: !Ref 'PrivateSubnet2'
+    Export:
+      Name: !Sub '${AWS::StackName}-PrivateSubnet2'
+
+  DiscordBotPublicSubnet1:
+    Description: A reference to the discord bot public subnet in the 1st Availability Zone
+    Value: !Ref 'DiscordPublicSubnet1'
+    Export:
+      Name: !Sub "${AWS::StackName}-DiscordBotPublicSubnet1"
+
+  DiscordBotPublicSubnet2:
+    Description: A reference to the discord bot public subnet in the 2nd Availability Zone
+    Value: !Ref 'DiscordPublicSubnet2'
+    Export:
+      Name: !Sub "${AWS::StackName}-DiscordBotPublicSubnet2"
+
+  DiscordBotSecurityGroup:
+    Description: Security group for discord bot
+    Value: !Ref 'DiscordBotSecurityGroup'
+    Export:
+      Name: !Sub '${AWS::StackName}-DiscordBotSecurityGroup'
+
+  EC2InstanceProfile:
+    Description: EC2 profile instance for launching EC2 instances
+    Value: !Ref 'EC2InstanceProfile'
+    Export:
+      Name: !Sub '${AWS::StackName}-EC2InstanceProfile'
+
+  NATEIPs:
+    Description: NAT Elastic IPs
+    Value: !Join
+      - ','
+      - - !Ref 'NatGateway1EIP'

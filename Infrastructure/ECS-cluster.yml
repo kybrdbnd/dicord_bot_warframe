@@ -1,0 +1,32 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  This template deploys the ECS clusters
+
+Parameters:
+
+  WarframeClusterName:
+    Type: String
+    Description: Name of ECS cluster for Warframe Bot
+    Default: warframe_bot
+
+Resources:
+
+  AppCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: !Sub '${WarframeClusterName}'
+
+Outputs:
+
+  ECSClusters:
+    Description: ECS Cluster
+    Value: !Join
+      - ','
+      - - !Ref 'WarframeClusterName'
+
+  WarframeClusterName:
+    Description: App cluster name
+    Value: !Ref 'AppCluster'
+    Export:
+      Name: !Sub '${AWS::StackName}-WarframeClusterName'

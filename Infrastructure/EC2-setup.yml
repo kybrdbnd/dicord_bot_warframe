@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  This template creates EC2 instances
+Parameters:
+
+  WarframeBotKeyName:
+    Description: Name of EC2 KeyPair for SSH into warframe bot
+    Type: String
+    Default: 'warframe.bot'
+
+  WarframeBotTypeParameter:
+    Type: String
+    Default: t3.nano
+    Description: EC2 instance type
+
+
+Resources:
+
+  WarframeBotEC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: 'ami-024fbf55b51b6f872'
+      InstanceType: !Ref 'WarframeBotTypeParameter'
+      KeyName: !Ref 'WarframeBotKeyName'
+      SecurityGroupIds:
+        - !ImportValue 'VPC-setup-DiscordBotSecurityGroup'
+      SubnetId: !ImportValue 'VPC-setup-DiscordBotPublicSubnet1'
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ''
+      IamInstanceProfile: !ImportValue 'VPC-setup-EC2InstanceProfile'
+      Monitoring: false
+      Tags:
+        - Key: Name
+          Value: 'warframe.bot'
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+            VolumeType: gp2
+      UserData: !Base64
+        Fn::Join:
+          - ''
+          - - "#!/bin/bash -xe\n"
+            - "echo ECS_CLUSTER="
+            - !ImportValue 'ECS-Cluster-setup-WarframeClusterName'
+            - ">> /etc/ecs/ecs.config"
+            - "\n"
+            - "cd /tmp \n"
+            - "sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm \n"
+            - "sudo start amazon-ssm-agent"
+
+
+Outputs:
+
+  EC2Instances:
+    Description: EC2 Instances
+    Value: !Join
+      - ','
+      - - !Ref 'WarframeBotEC2Instance'

@@ -6,3 +6,4 @@ services:
     build:
       context: .
     image: warframe-india
+    env_file: .env
