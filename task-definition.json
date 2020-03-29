@@ -39,7 +39,7 @@
                 },
                  {
                     "name": "MONGO_URL",
-                    "valueFrom": "warframe_mongo_url"
+                    "valueFrom": "warframe_bot_mongo_url"
                 }
             ]
         }
