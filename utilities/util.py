@@ -4,18 +4,17 @@ from discord.ext import commands
 import discord
 from pymongo import MongoClient
 
-
 TOKEN = os.getenv('TOKEN')
 GUILD = os.getenv('GUILD')
 GENERAL_CHANNEL_ID = os.getenv('GENERAL_CHANNEL_ID')
 GIVEAWAY_CHANNEL_ID = os.getenv('GIVEAWAY_CHANNEL_ID')
 USER_ID = os.getenv('USER_ID')
-
+MONGO_URL = os.getenv('MONGO_URL')
 game = discord.Game("%help")
 
 bot = commands.Bot(command_prefix='%', description='Assistance Provider', activity=game)
 
-conn = MongoClient('localhost:27017')
+conn = MongoClient(MONGO_URL)
 db = conn['warframe_india']
 
 
