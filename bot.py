@@ -21,6 +21,14 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
+@bot.event
+async def on_member_join(member):
+    channel = bot.get_channel(int(GENERAL_CHANNEL_ID))
+    if member.bot is False:
+        await channel.send(f"Hunter {member.mention}, Welcome to Warframe India Community!!!!. "
+                           f"Make sure to #introduction channel to introduce yourself")
+
+
 @bot.command(name='say')
 async def say(ctx, *args):
     if len(args) > 0:
