@@ -2,10 +2,8 @@ import os
 import random
 from discord.ext import commands
 import discord
-from dotenv import load_dotenv
 from pymongo import MongoClient
 
-# load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
 GUILD = os.getenv('GUILD')

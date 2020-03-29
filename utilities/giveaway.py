@@ -66,4 +66,6 @@ async def giveaway_winner(ctx):
 @giveaway_start.error
 async def giveaway_start_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send('Provide the condition')
+        await ctx.seWXnd('Provide the condition')
+    elif isinstance(error, commands.CheckFailure):
+        await ctx.send('You are not authorized')
