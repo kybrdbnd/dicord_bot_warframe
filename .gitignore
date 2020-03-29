@@ -121,7 +121,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
-
+Infrastructure/ECS-service.yml
 # mypy
 .mypy_cache/
 .dmypy.json
