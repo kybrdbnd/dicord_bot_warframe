@@ -1,11 +1,11 @@
 # Discord BOT (Warframe India) 
 Custom discord bot for Warframe India Community
 
-###Build Status:
+### Build Status:
 
 ![Deploy to Amazon ECS](https://github.com/kybrdbnd/discord_bot_warframe/workflows/Deploy%20to%20Amazon%20ECS/badge.svg)
 
-###Pre-requisites:
+### Pre-requisites:
 
 1. MongoDB
 2. Python >= 3.6
@@ -13,7 +13,7 @@ Custom discord bot for Warframe India Community
 
 **Note: Make sure you are running linux containers on windows**
 
-###Follow the steps to get the bot working:
+### Follow the steps to get the bot working:
 
 1. Create the bot in discord application dashboard.
 2. Invite the bot onto your server. (It will be offline, don't worry)
