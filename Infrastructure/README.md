@@ -7,8 +7,7 @@ All the infrastructure setup has been done using AWS Cloudformation.
 
 Following are the files and their short description:
 
-1. **VPC-setup.yml** -> Used to setup the VPC, which includes 2 public and private subnets
-along with NAT, EIP, routing table association and IAM role creation.
+1. **VPC-setup.yml** -> Used to setup the VPC, which includes 2 public subnets routing table association and IAM role creation.
 
 2. **ECS-cluster.yml** -> Setting up the cluster
 
