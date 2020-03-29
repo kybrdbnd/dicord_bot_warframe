@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description:
+  This template creates task definitions and services for dev env.
+
+Parameters:
+
+  PublicFacingPort:
+    Description: HTTP Port
+    Type: Number
+    Default: 80
+
+  WarframeBotServiceName:
+    Description: account micro-service name
+    Type: String
+    Default: 'warframe-bot'
+
+  NetworkMode:
+    Description: Network connection mode for container
+    Type: String
+    Default: 'bridge'
+
+  DefaultTaskCount:
+    Description: Intial Task definition for the services
+    Type: Number
+    Default: 1
+
+  ServicesMaximumHealthPercentage:
+    Description: Maximum Healthy Percentage for a service
+    Type: Number
+    Default: 100
+
+  ServicesMinimumHealthPercentage:
+    Description: Minimum Healthy Percentage for a service
+    Type: Number
+    Default: 50
+
+Resources:
+
+  WarframeBotTaskDefinition:
+    Type: 'AWS::ECS::TaskDefinition'
+    Properties:
+      ContainerDefinitions:
+        - Name: !Ref 'WarframeBotServiceName'
+          Image: '580345014258.dkr.ecr.ap-south-1.amazonaws.com/warframe_bot:latest'
+          Cpu: 1024
+          PortMappings:
+            - ContainerPort: !Ref 'PublicFacingPort'
+              HostPort: !Ref 'PublicFacingPort'
+          Secrets:
+            - Name: TOKEN
+              ValueFrom: 'warframe_bot_token'
+            - Name: GUILD
+              ValueFrom: 'warframe_india_server_name'
+            - Name: GENERAL_CHANNEL_ID
+              ValueFrom: 'general_channel_id'
+            - Name: GIVEAWAY_CHANNEL_ID
+              ValueFrom: 'giveaway_channel_id'
+            - Name: USER_ID
+              ValueFrom: 'test_user_id'
+          MemoryReservation: 256
+          Essential: 'true'
+      Family: !Ref 'WarframeBotServiceName'
+      TaskRoleArn: 'arn:aws:iam::580345014258:role/ap-south-1-discord'
+      ExecutionRoleArn: 'arn:aws:iam::580345014258:role/ap-south-1-discord'
+      RequiresCompatibilities:
+        - 'EC2'
+      NetworkMode: !Ref 'NetworkMode'
+
+  WarframeBotService:
+    Type: 'AWS::ECS::Service'
+    Properties:
+      Cluster: !ImportValue 'ECS-Cluster-setup-WarframeClusterName'
+      DesiredCount:
+        Ref: 'DefaultTaskCount'
+      TaskDefinition:
+        Ref: 'WarframeBotTaskDefinition'
+      ServiceName:
+        Ref: 'WarframeBotServiceName'
+      PlacementStrategies:
+        - Type: spread
+          Field: attribute:ecs.availability-zone
+        - Type: spread
+          Field: instanceId
+
+Outputs:
+  WarframeBotService:
+    Description: Warframe Bot Service Name
+    Value: !Ref 'WarframeBotServiceName'
+    Export:
+      Name: !Sub '${AWS::StackName}-WarframeBotServiceName'
