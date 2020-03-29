@@ -19,7 +19,7 @@
             "secrets": [
                 {
                     "name": "TOKEN",
-                    "valueFrom ": "warframe_bot_token"
+                    "valueFrom": "warframe_bot_token"
                 },
                 {
                     "name": "GUILD",
