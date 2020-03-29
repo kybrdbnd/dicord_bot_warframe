@@ -6,12 +6,12 @@
         {
             "name": "warframe-bot",
             "image": "580345014258.dkr.ecr.ap-south-1.amazonaws.com/warframe_bot:latest",
-            "cpu": 256,
+            "cpu": 512,
             "memory": 128,
             "portMappings": [
                 {
                     "containerPort": 80,
-                    "hostPort": 80,
+                    "hostPort": 0,
                     "protocol": "tcp"
                 }
             ],

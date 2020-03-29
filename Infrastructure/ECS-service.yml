@@ -24,16 +24,6 @@ Parameters:
     Type: Number
     Default: 1
 
-  ServicesMaximumHealthPercentage:
-    Description: Maximum Healthy Percentage for a service
-    Type: Number
-    Default: 100
-
-  ServicesMinimumHealthPercentage:
-    Description: Minimum Healthy Percentage for a service
-    Type: Number
-    Default: 50
-
 Resources:
 
   WarframeBotTaskDefinition:
@@ -42,10 +32,10 @@ Resources:
       ContainerDefinitions:
         - Name: !Ref 'WarframeBotServiceName'
           Image: '580345014258.dkr.ecr.ap-south-1.amazonaws.com/warframe_bot:latest'
-          Cpu: 1024
+          Cpu: 512
           PortMappings:
             - ContainerPort: !Ref 'PublicFacingPort'
-              HostPort: !Ref 'PublicFacingPort'
+              HostPort: 0
           Secrets:
             - Name: TOKEN
               ValueFrom: 'warframe_bot_token'
@@ -57,7 +47,7 @@ Resources:
               ValueFrom: 'giveaway_channel_id'
             - Name: USER_ID
               ValueFrom: 'test_user_id'
-          MemoryReservation: 256
+          MemoryReservation: 128
           Essential: 'true'
       Family: !Ref 'WarframeBotServiceName'
       TaskRoleArn: 'arn:aws:iam::580345014258:role/ap-south-1-discord'
