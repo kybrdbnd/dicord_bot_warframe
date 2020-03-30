@@ -57,6 +57,21 @@ async def ign_mine(ctx):
         await ctx.send(f"IGN not found")
 
 
+@ign.command(name='list', help='display members ign')
+async def ign_list(ctx):
+    collection = db[IGN_COLLECTION_NAME]
+    ignDocs = list(collection.find({}))
+    message = ''
+    if len(ignDocs) > 0:
+        for doc in ignDocs:
+            member = bot.get_user(doc['id'])
+            if member is not None:
+                message += f"Hunter {member.mention} IGN is {doc['ign']} \n"
+        await ctx.send(message)
+    else:
+        await ctx.send("No warframe user names found")
+
+
 @ign_save.error
 async def info_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
