@@ -34,3 +34,11 @@ can search for them, instead of asking again and again
 
 3. **Warframe Status** -> Added support for warframe game status, like fissures info,
 void trader info, more coming up soon
+
+4. **Poll** -> Simple Poll support
+
+Don't forget to join our discord server -> https://discord.gg/FQKc6q6
+
+Find me on discord -> pucci#4435
+
+<iframe src="https://discordapp.com/widget?id=501295892536492046&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0"></iframe>
