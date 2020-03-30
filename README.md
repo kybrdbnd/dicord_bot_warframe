@@ -40,5 +40,3 @@ void trader info, more coming up soon
 Don't forget to join our discord server -> https://discord.gg/FQKc6q6
 
 Find me on discord -> pucci#4435
-
-<iframe src="https://discordapp.com/widget?id=501295892536492046&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0"></iframe>
