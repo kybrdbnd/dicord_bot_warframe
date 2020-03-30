@@ -1,3 +1,4 @@
+from dateutil import parser
 from .util import *
 import requests
 
@@ -119,14 +120,15 @@ async def get_voidtrader(ctx):
     response = request.json()
     if response['active']:
         description = f"**Leaving in:** {response['endString']}"
-        embedCard = discord.Embed(title=f"{response['character']} ,{response['location']}", description=description)
+        embedCard = discord.Embed(title=f"{response['character']}, {response['location']}", description=description)
         for i in range(len(response['inventory'])):
             variant = response['inventory'][i]
             variantValue = f"**Item:** {variant['item']}   \n    **Ducats:** {variant['ducats']} \n " \
                            f"**Credits:** {variant['credits']}"
             embedCard.add_field(name=f'Item {i + 1}', value=variantValue, inline=True)
     else:
-        description = f"**Coming in:** {response['activation']}"
+        dt = parser.parse(response['activation'].split('T')[0])
+        description = f"**Coming on:** {dt.strftime('%A, %d %B')}"
 
         embedCard = discord.Embed(title=f"{response['character']} ,{response['location']}", description=description)
 
