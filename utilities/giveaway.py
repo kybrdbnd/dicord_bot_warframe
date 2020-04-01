@@ -9,7 +9,7 @@ def check_user(ctx):
     return ctx.message.author.id == int(USER_ID)  # only pucci can do it
 
 
-@bot.group(help='Giveaway Commands')
+@bot.group(help='Giveaway Commands (Only Admins)')
 async def giveaway(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send('Invalid giveaway command passed...')
@@ -18,30 +18,50 @@ async def giveaway(ctx):
 @giveaway.command(name='start', help='Start Giveaway')
 @commands.check(check_user)
 async def giveaway_start(ctx, condition: str):
-    channel = bot.get_channel(int(GIVEAWAY_CHANNEL_ID))
-    await channel.send(condition)
+    collection = db[GIVEAWAY_COLLECTION_NAME]
+    giveawayDocs = list(collection.find({}).sort('createdOn', -1))
+    newGiveaway = False
+    if len(giveawayDocs) == 0:
+        newGiveaway = True
+    elif len(giveawayDocs) > 0:
+        giveawayDoc = giveawayDocs[0]
+        if 'winner' in giveawayDoc:
+            newGiveaway = True
+        else:
+            await ctx.send(f"winner still to be decided for giveaway -> {giveawayDoc['condition']}")
+    if newGiveaway:
+        giveawayJSON = {
+            'condition': condition,
+            'startAt': datetime.now().strftime("%Y-%m-%d"),
+            'updatedOn': datetime.now(),
+            'createdOn': datetime.now(),
+            'onGoing': True
+        }
+        collection.insert(giveawayJSON)
+    await ctx.send("Giveaway started successfully!!!")
 
 
 @giveaway.command(name='price', help='Giveaway Price', usage='<price>')
 @commands.check(check_user)
 async def price(ctx, giveaway_price: str):
-    channel = bot.get_channel(int(GIVEAWAY_CHANNEL_ID))
-
     collection = db[GIVEAWAY_COLLECTION_NAME]
-    priceJSON = {
-        'price': giveaway_price,
-        'startAt': datetime.now().strftime("%Y-%m-%d"),
-        'createdOn': datetime.now()
-    }
-    collection.insert_one(priceJSON)
 
-    await channel.send(f'Giveaway! Price is {giveaway_price}')
+    giveawayDocs = list(collection.find({}).sort('createdOn', -1))
+    if len(giveawayDocs) > 0:
+        giveawayDoc = giveawayDocs[0]
+        if 'winner' not in giveawayDoc:
+            collection.update({'_id': giveawayDoc['_id']},
+                              {'$set': {'price': giveaway_price, 'updatedOn': datetime.now()}}, upsert=True)
+            await ctx.send("price updated")
+        else:
+            await ctx.send("Cannot modify price now, winner already declared for last giveaway. Start a new giveaway")
+    else:
+        await ctx.send("No Giveaway found!!!")
 
 
 @giveaway.command(name='winner', help='Decide Giveaway winner')
 @commands.check(check_user)
 async def giveaway_winner(ctx):
-    dt = datetime.now().strftime("%Y-%m-%d")
     channel = bot.get_channel(int(GIVEAWAY_CHANNEL_ID))
     collection = db[GIVEAWAY_COLLECTION_NAME]
 
@@ -54,11 +74,59 @@ async def giveaway_winner(ctx):
             users = filter_users(bot.get_all_members())
             giveawayWinner = get_giveaway_winner(users)
 
-            collection.update_one({'_id': lastGiveawayDoc['_id']},
-                                  {'$set': {'winner': giveawayWinner.name,
-                                            'updatedOn': dt}}, upsert=True)
+            collection.update({'_id': lastGiveawayDoc['_id']},
+                              {'$set': {'winner': giveawayWinner.name,
+                                        'winner_id': giveawayWinner.id,
+                                        'onGoing': False,
+                                        'updatedOn': datetime.now()}}, upsert=True)
 
             await channel.send(f"Congratulations {giveawayWinner.mention} for winning {lastGiveawayDoc['price']}")
+    else:
+        await ctx.send("No giveaways found!!!")
+
+
+@giveaway.command(name='current', help='Current giveaway info')
+async def giveaway_current(ctx):
+    collection = db[GIVEAWAY_COLLECTION_NAME]
+    giveawayPrice = "No price decided yet"
+    winner = "No winner decided yet"
+    giveawayDocs = list(collection.find({'onGoing': True}).sort('createdOn', -1))
+    if len(giveawayDocs) > 0:
+        lastGiveawayDoc = giveawayDocs[0]
+        if 'condition' in lastGiveawayDoc:
+            embedCard = discord.Embed(title="Giveaway!!!", description=lastGiveawayDoc['condition'])
+            if 'price' in lastGiveawayDoc:
+                giveawayPrice = lastGiveawayDoc['price']
+            if 'winner' in lastGiveawayDoc:
+                winner = bot.get_user(lastGiveawayDoc['winner_id']).name
+            embedCard.add_field(name='Winner', value=winner, inline=True)
+            embedCard.add_field(name='Price', value=giveawayPrice, inline=True)
+            await ctx.send(embed=embedCard)
+        else:
+            ctx.send("")
+    else:
+        await ctx.send("No giveaways found!!!")
+
+
+@giveaway.command(name='last_winner', help='Get last giveaway winner info')
+async def giveaway_last_winner(ctx):
+    collection = db[GIVEAWAY_COLLECTION_NAME]
+    giveawayDocs = list(collection.find({}).sort('createdOn', -1))
+    lastGiveawayDoc = None
+    if len(giveawayDocs) > 0:
+        for doc in giveawayDocs:
+            if 'winner' in doc:
+                lastGiveawayDoc = doc
+                break
+        if lastGiveawayDoc is not None:
+            embedCard = discord.Embed(title="Giveaway!!!", description=lastGiveawayDoc['condition'])
+            giveawayPrice = lastGiveawayDoc['price']
+            winner = bot.get_user(lastGiveawayDoc['winner_id']).name
+            embedCard.add_field(name='Winner', value=winner, inline=True)
+            embedCard.add_field(name='Price', value=giveawayPrice, inline=True)
+            await ctx.send(embed=embedCard)
+        else:
+            await ctx.send("No winner has been decided yet in any giveaway")
     else:
         await ctx.send("No giveaways found!!!")
 
@@ -66,6 +134,14 @@ async def giveaway_winner(ctx):
 @giveaway_start.error
 async def giveaway_start_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.seWXnd('Provide the condition')
+        await ctx.send('Provide the condition')
+    elif isinstance(error, commands.CheckFailure):
+        await ctx.send('You are not authorized')
+
+
+@price.error
+async def price_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Provide the price')
     elif isinstance(error, commands.CheckFailure):
         await ctx.send('You are not authorized')
