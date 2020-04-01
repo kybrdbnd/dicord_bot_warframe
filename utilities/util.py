@@ -10,6 +10,8 @@ GENERAL_CHANNEL_ID = os.getenv('GENERAL_CHANNEL_ID')
 GIVEAWAY_CHANNEL_ID = os.getenv('GIVEAWAY_CHANNEL_ID')
 USER_ID = os.getenv('USER_ID')
 MONGO_URL = os.getenv('MONGO_URL')
+INTRODUCTION_CHANNEL_ID = os.getenv('INTRODUCTION_CHANNEL_ID')
+
 game = discord.Game("%help")
 
 bot = commands.Bot(command_prefix='%', description='Assistance Provider', activity=game)

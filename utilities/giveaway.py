@@ -9,13 +9,13 @@ def check_user(ctx):
     return ctx.message.author.id == int(USER_ID)  # only pucci can do it
 
 
-@bot.group(help='Giveaway Commands (Only Admins)')
+@bot.group(help='Giveaway Commands')
 async def giveaway(ctx):
     if ctx.invoked_subcommand is None:
         await ctx.send('Invalid giveaway command passed...')
 
 
-@giveaway.command(name='start', help='Start Giveaway')
+@giveaway.command(name='start', help='Start Giveaway', hidden=True)
 @commands.check(check_user)
 async def giveaway_start(ctx, condition: str):
     collection = db[GIVEAWAY_COLLECTION_NAME]
@@ -41,7 +41,7 @@ async def giveaway_start(ctx, condition: str):
     await ctx.send("Giveaway started successfully!!!")
 
 
-@giveaway.command(name='price', help='Giveaway Price', usage='<price>')
+@giveaway.command(name='price', help='Giveaway Price', usage='<price>', hidden=True)
 @commands.check(check_user)
 async def price(ctx, giveaway_price: str):
     collection = db[GIVEAWAY_COLLECTION_NAME]
@@ -59,7 +59,7 @@ async def price(ctx, giveaway_price: str):
         await ctx.send("No Giveaway found!!!")
 
 
-@giveaway.command(name='winner', help='Decide Giveaway winner')
+@giveaway.command(name='winner', help='Decide Giveaway winner', hidden=True)
 @commands.check(check_user)
 async def giveaway_winner(ctx):
     channel = bot.get_channel(int(GIVEAWAY_CHANNEL_ID))
@@ -93,17 +93,14 @@ async def giveaway_current(ctx):
     giveawayDocs = list(collection.find({'onGoing': True}).sort('createdOn', -1))
     if len(giveawayDocs) > 0:
         lastGiveawayDoc = giveawayDocs[0]
-        if 'condition' in lastGiveawayDoc:
-            embedCard = discord.Embed(title="Giveaway!!!", description=lastGiveawayDoc['condition'])
-            if 'price' in lastGiveawayDoc:
-                giveawayPrice = lastGiveawayDoc['price']
-            if 'winner' in lastGiveawayDoc:
-                winner = bot.get_user(lastGiveawayDoc['winner_id']).name
-            embedCard.add_field(name='Winner', value=winner, inline=True)
-            embedCard.add_field(name='Price', value=giveawayPrice, inline=True)
-            await ctx.send(embed=embedCard)
-        else:
-            ctx.send("")
+        embedCard = discord.Embed(title="Giveaway!!!", description=lastGiveawayDoc['condition'])
+        if 'price' in lastGiveawayDoc:
+            giveawayPrice = lastGiveawayDoc['price']
+        if 'winner' in lastGiveawayDoc:
+            winner = bot.get_user(lastGiveawayDoc['winner_id']).name
+        embedCard.add_field(name='Winner', value=winner, inline=True)
+        embedCard.add_field(name='Price', value=giveawayPrice, inline=True)
+        await ctx.send(embed=embedCard)
     else:
         await ctx.send("No giveaways found!!!")
 
@@ -127,6 +124,30 @@ async def giveaway_last_winner(ctx):
             await ctx.send(embed=embedCard)
         else:
             await ctx.send("No winner has been decided yet in any giveaway")
+    else:
+        await ctx.send("No giveaways found!!!")
+
+
+@giveaway.command(name='alert', help='alert giveaway info', hidden=True)
+@commands.check(check_user)
+async def giveaway_alert(ctx):
+    channel = bot.get_channel(int(GIVEAWAY_CHANNEL_ID))
+
+    collection = db[GIVEAWAY_COLLECTION_NAME]
+    giveawayPrice = "No price decided yet"
+    winner = "No winner decided yet"
+    giveawayDocs = list(collection.find({'onGoing': True}).sort('createdOn', -1))
+    if len(giveawayDocs) > 0:
+        lastGiveawayDoc = giveawayDocs[0]
+        embedCard = discord.Embed(title="Giveaway!!!", description=lastGiveawayDoc['condition'])
+        if 'price' in lastGiveawayDoc:
+            giveawayPrice = lastGiveawayDoc['price']
+        if 'winner' in lastGiveawayDoc:
+            winner = bot.get_user(lastGiveawayDoc['winner_id']).name
+        embedCard.add_field(name='Winner', value=winner, inline=True)
+        embedCard.add_field(name='Price', value=giveawayPrice, inline=True)
+        await channel.send("Giveaway alert!!!! @everyone")
+        await channel.send(embed=embedCard)
     else:
         await ctx.send("No giveaways found!!!")
 

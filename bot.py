@@ -1,5 +1,3 @@
-import json
-
 from utilities.all_utilities import *
 from utilities.constants import *
 
@@ -26,10 +24,12 @@ async def on_message(message):
 
 @bot.event
 async def on_member_join(member):
-    channel = bot.get_channel(int(GENERAL_CHANNEL_ID))
+    generalChannel = bot.get_channel(int(GENERAL_CHANNEL_ID))
+    introductionChannel = bot.get_channel(int(INTRODUCTION_CHANNEL_ID))
+
     if member.bot is False:
-        await channel.send(f"Hunter {member.mention}, Welcome to Warframe India Community!!!!. "
-                           f"Make sure to #introduction channel to introduce yourself")
+        await generalChannel.send(f"Hunter {member.mention}, Welcome to Warframe India Community!!!!. "
+                                  f"Make sure to go to <#{introductionChannel.id}> channel to introduce yourself")
 
 
 @bot.command(name='say')
@@ -56,7 +56,7 @@ async def capture(ctx, members: commands.Greedy[discord.Member], *, sample='capt
         success_members = random.sample(members, random_numbers)
         for member in success_members:
             message += f"{member.mention}"
-        await ctx.send(f"{author.mention} you have synthesize {message}")
+        await ctx.send(f"{author.mention} you have synthesized {message}")
     else:
         await ctx.send("Hunter select targets to synthesize")
 
