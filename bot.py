@@ -51,10 +51,10 @@ async def quotes(ctx):
 async def capture(ctx, members: commands.Greedy[discord.Member], *, sample='capture'):
     author = ctx.author
     message = ''
-    # random_numbers = random.randint(1, len(members))
-    # success_members = random.choices(members)
     if len(members) > 0:
-        for member in members:
+        random_numbers = random.randint(1, len(members))
+        success_members = random.sample(members, random_numbers)
+        for member in success_members:
             message += f"{member.mention}"
         await ctx.send(f"{author.mention} you have synthesize {message}")
     else:
