@@ -1,0 +1,4 @@
+%giveaway start
+%giveaway price
+%giveaway winner
+%giveaway alert

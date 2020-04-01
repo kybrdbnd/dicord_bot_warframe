@@ -37,9 +37,13 @@
                     "name": "USER_ID",
                     "valueFrom": "test_user_id"
                 },
-                 {
+                {
                     "name": "MONGO_URL",
                     "valueFrom": "warframe_bot_mongo_url"
+                },
+                {
+                    "name": "INTRODUCTION_CHANNEL_ID",
+                    "valueFrom": "introduction_channel_id"
                 }
             ]
         }
