@@ -1,4 +1,4 @@
-cephalon_simaris_quotes = [
+quotes = [
     "Ah... I see we are of like mind. The Sanctuary will be your project too.",
     "Hunter, my research needs you. Are you ready to endure the rigors of the Sanctuary?",
     "Go then. Some other Hunter will have mettle enough to assist me.",

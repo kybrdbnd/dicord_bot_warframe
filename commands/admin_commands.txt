@@ -2,3 +2,5 @@
 %giveaway price
 %giveaway winner
 %giveaway alert
+
+%say #channel message
