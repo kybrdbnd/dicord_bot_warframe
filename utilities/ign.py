@@ -4,6 +4,10 @@ from .util import *
 IGN_COLLECTION_NAME = 'ign'
 
 
+def check_user(ctx):
+    return ctx.message.author.id == int(USER_ID)  # only pucci can do it
+
+
 @bot.group(help='IGN Commands')
 async def ign(ctx):
     if ctx.invoked_subcommand is None:
@@ -72,7 +76,26 @@ async def ign_list(ctx):
         await ctx.send("No warframe user names found")
 
 
+@ign.command(name='save_member', help='save member ign')
+@commands.check(check_user)
+async def save_member(ctx, member: discord.Member, ign_name: str):
+    collection = db[IGN_COLLECTION_NAME]
+    query = {
+        'id': member.id
+    }
+    collection.update_one(query, {'$set': {'ign': ign_name, 'updatedOn': datetime.now()}}, upsert=True)
+    await ctx.send(f"Hunter {member.mention} ign saved successfully")
+
+
 @ign_save.error
 async def info_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send('Invalid IGN provided')
+
+
+@save_member.error
+async def save_member_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please provide member/ign')
+    elif isinstance(error, commands.CheckFailure):
+        await ctx.send('You are not authorized')
