@@ -95,5 +95,7 @@ async def info_error(ctx, error):
 
 @save_member.error
 async def save_member_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send('Please provide member/ign')
+    elif isinstance(error, commands.CheckFailure):
         await ctx.send('You are not authorized')
