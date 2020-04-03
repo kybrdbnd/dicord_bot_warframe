@@ -83,7 +83,7 @@ async def save_member(ctx, member: discord.Member, ign_name: str):
     query = {
         'id': member.id
     }
-    collection.update_one(query, {'$set': {'ign': ign_name}}, upsert=True)
+    collection.update_one(query, {'$set': {'ign': ign_name, 'updatedOn': datetime.now()}}, upsert=True)
     await ctx.send(f"Hunter {member.mention} ign saved successfully")
 
 
