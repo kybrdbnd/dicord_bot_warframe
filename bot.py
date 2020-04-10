@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from cogs.constants import *
+from cogs.utils.constants import *
 
 COGS = ["cogs.poll", "cogs.fun", "cogs.ign", "cogs.giveaway", "cogs.warframe"]
 

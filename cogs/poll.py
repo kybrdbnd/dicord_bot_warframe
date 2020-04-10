@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from .constants import REACTIONS_LIST
+from cogs.utils.constants import REACTIONS_LIST
 
 
 class Polls(commands.Cog):
