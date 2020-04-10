@@ -127,10 +127,11 @@ async def get_voidtrader(ctx):
                            f"**Credits:** {variant['credits']}"
             embedCard.add_field(name=f'Item {i + 1}', value=variantValue, inline=True)
     else:
-        dt = parser.parse(response['activation'].split('T')[0])
-        description = f"**Coming on:** {dt.strftime('%A, %d %B')}"
+        dt = parser.parse(response['activation'])
+        newDt = dt.astimezone(timeZone)
+        description = f"**Coming on:** {newDt.strftime('%A, %d %B %H:%M')}"
 
-        embedCard = discord.Embed(title=f"{response['character']} ,{response['location']}", description=description)
+        embedCard = discord.Embed(title=f"{response['character']}, {response['location']}", description=description)
 
     await ctx.send(embed=embedCard)
 
