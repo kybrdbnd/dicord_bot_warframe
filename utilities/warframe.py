@@ -1,9 +1,11 @@
 from dateutil import parser
 from .util import *
 import requests
+import typing
 
 relics_tiers = ['Axi', 'Lith', 'Neo', 'Meso', 'Requiem']
-mission_type = ['Capture', 'Mobile Defense', 'Defense', 'Rescue', 'Sabotage', 'Exterminate']
+mission_type = ['Capture', 'Mobile Defense', 'Defense', 'Rescue', 'Sabotage', 'Exterminate', 'All', 'Survival',
+                'Assault', 'Spy', 'Excavation']
 DEFAULT_MISSION_TYPE = 'Capture'
 
 
@@ -40,51 +42,35 @@ async def cycle(ctx, place: str):
 
 
 @warframe.command(name='fissures', help='Display fissures',
-                  usage='<fissure> mission[optional]=all|exterminate|sabotage|rescue|capture')
+                  usage='<fissure> <mission>=all|exterminate|sabotage|rescue|capture|spy|assault|excavation|mobile defense')
 async def fissures(ctx, *args):
     fissures_list = []
+    mission_filter_fissures = []
     request = requests.get('https://api.warframestat.us/pc/fissures')
     response = request.json()
     request.raise_for_status()
-    mission = None
-    args = list(args)
+    relics, missions = [], []
     if len(args) == 0:
+        pass
+    else:
+        for argument in args:
+            if argument.title() in relics_tiers:
+                relics.append(argument)
+            elif argument.title() in mission_type:
+                missions.append(argument)
+    if len(relics) == 0:
         fissures_list = response
     else:
-        if len(args) >= 2:
-            if args[-1].startswith('mission'):
-                try:
-                    mission = args[-1].split('=')[1]
-                    args.pop()
-                except Exception as err:
-                    await ctx.send("Provide Mission Type")
-        if len(args) == 1 and args[0].startswith('mission'):
-            try:
-                mission = args[-1].split('=')[1]
-                args.pop()
-                fissures_list = response
-            except Exception as err:
-                await ctx.send("Provide Mission Type")
-
-        for relic in args:
-            for fissure in response:
-                if fissure['tier'] == relic.title():
-                    fissures_list.append(fissure)
-    if mission is None:
-        mission = DEFAULT_MISSION_TYPE
-    elif mission == 'all':
-        mission = 'all'
+        for relic in relics:
+            fissures_list.extend(list(filter(lambda x: x['tier'] == relic.title(), response)))
+    if len(missions) == 0:
+        mission_filter_fissures.extend(list(filter(lambda x: x['missionType'] == DEFAULT_MISSION_TYPE, fissures_list)))
     else:
-        mission = mission.title()
-    mission_filter_fissures = []
-
-    if mission == 'all':
-        mission_filter_fissures = fissures_list
-    else:
-        for fissure in fissures_list:
-            if fissure['missionType'] == mission:
-                mission_filter_fissures.append(fissure)
-
+        mission = missions[0]
+        if mission == 'all':
+            mission_filter_fissures = fissures_list
+        else:
+            mission_filter_fissures.extend(list(filter(lambda x: x['missionType'] == mission.title(), fissures_list)))
     for fissure in mission_filter_fissures:
         embedCard = discord.Embed(title=f'{fissure["tier"]}')
         embedCard.add_field(name='Node', value=fissure['node'], inline=True)
@@ -93,9 +79,8 @@ async def fissures(ctx, *args):
         embedCard.add_field(name='Type', value=fissure['missionType'], inline=True)
 
         await ctx.send(embed=embedCard)
-
     if len(mission_filter_fissures) == 0:
-        await ctx.send(f"No {mission} missions found")
+        await ctx.send(f"No missions found")
 
 
 @warframe.command(name='sortie', help="Display Sortie Status")
@@ -140,3 +125,9 @@ async def get_voidtrader(ctx):
 async def cycle_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send('Cycle is missing, valid values are cetus|vallis')
+
+
+@fissures.error
+async def fissure_error(ctx, error):
+    if isinstance(error, commands.CommandInvokeError):
+        await ctx.send('I apologize for the inconvenience tenno!!! for not been able to serve you')
