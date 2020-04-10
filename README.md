@@ -1,9 +1,15 @@
 # Discord BOT (Warframe India) 
+[![Discord](https://img.shields.io/static/v1?label=Warframe%20India&logo=discord&message=%3E50%20members&color=%237289DA&logoColor=white)](https://discord.gg/FQKc6q6)
+![Python](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg)
+
+[![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
+
 Custom discord bot for Warframe India Community
 
 ### Build Status:
 
 ![Deploy to Amazon ECS](https://github.com/kybrdbnd/discord_bot_warframe/workflows/Deploy%20to%20Amazon%20ECS/badge.svg)
+
 
 ### Pre-requisites:
 
@@ -37,6 +43,9 @@ void trader info, more coming up soon
 
 4. **Poll** -> Simple Poll support
 
-Don't forget to join our discord server -> https://discord.gg/FQKc6q6
+Don't forget to join our discord server
+
+[![Discord](https://img.shields.io/static/v1?label=Warframe%20India&logo=discord&message=%3E50%20members&color=%237289DA&logoColor=white)](https://discord.gg/FQKc6q6)
+
 
 Find me on discord -> pucci#4435
