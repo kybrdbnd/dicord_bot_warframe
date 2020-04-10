@@ -2,6 +2,7 @@ import os
 import random
 from discord.ext import commands
 import discord
+import pytz
 from pymongo import MongoClient
 from utilities.dialogues import simaris_quotes, roast_quotes
 
@@ -12,6 +13,7 @@ GIVEAWAY_CHANNEL_ID = os.getenv('GIVEAWAY_CHANNEL_ID')
 USER_ID = os.getenv('USER_ID')
 MONGO_URL = os.getenv('MONGO_URL')
 INTRODUCTION_CHANNEL_ID = os.getenv('INTRODUCTION_CHANNEL_ID')
+timeZone = pytz.timezone('Asia/Kolkata')
 
 game = discord.Game("%help")
 
