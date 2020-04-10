@@ -1,34 +1,42 @@
-from utilities.all_utilities import *
+import discord
+from discord.ext import commands
+from cogs.utils.constants import *
+
+COGS = ["cogs.poll", "cogs.fun", "cogs.ign", "cogs.giveaway", "cogs.warframe"]
 
 
-@bot.event
-async def on_ready():
-    guild = discord.utils.get(bot.guilds, name=GUILD)
+class Bot(commands.Bot):
+    def __init__(self):
+        super().__init__(self)
 
-    print(
-        f'{bot.user} is connected to the following guild:\n'
-        f'{guild.name}(id: {guild.id})\n'
-    )
+        game = discord.Game("%help")
+        self.command_prefix = '%'
+        self.description = 'Assistance Provider'
+        self.activity = game
+
+        for cog in COGS:
+            self.load_extension(cog)
+
+    async def on_ready(self):
+        print('Connected!')
+        print('Bot: {0.name}\nID: {0.id}'.format(self.user))
+
+    async def on_message(self, message):
+
+        if message.author.bot:
+            return
+
+        await self.process_commands(message)
+
+    async def on_member_join(self, member):
+        generalChannel = self.get_channel(int(GENERAL_CHANNEL_ID))
+        introductionChannel = self.get_channel(int(INTRODUCTION_CHANNEL_ID))
+
+        if member.bot is False:
+            await generalChannel.send(f"Hunter {member.mention}, Welcome to Warframe India Community!!!!. "
+                                      f"Make sure to go to <#{introductionChannel.id}> channel to introduce yourself")
 
 
-@bot.event
-async def on_message(message):
-    # print(f'Message from {message.author}: {message.content}')
-
-    if message.author == bot.user:
-        return
-
-    await bot.process_commands(message)
-
-
-@bot.event
-async def on_member_join(member):
-    generalChannel = bot.get_channel(int(GENERAL_CHANNEL_ID))
-    introductionChannel = bot.get_channel(int(INTRODUCTION_CHANNEL_ID))
-
-    if member.bot is False:
-        await generalChannel.send(f"Hunter {member.mention}, Welcome to Warframe India Community!!!!. "
-                                  f"Make sure to go to <#{introductionChannel.id}> channel to introduce yourself")
-
+bot = Bot()
 
 bot.run(TOKEN)
