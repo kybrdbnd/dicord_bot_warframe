@@ -118,33 +118,57 @@ class Warframe(commands.Cog):
 
         await ctx.send(embed=embedCard)
 
+    @staticmethod
+    def remove_glyphs(result):
+        return list(filter(lambda x: x['type'] != 'Glyph', result))
+
     @warframe.command(name='search', help='search for any item', usage='<item name>')
     async def search(self, ctx, item: str):
         request = requests.get(f'https://api.warframestat.us/items/search/{item}')
+        isPrime = False
+        if 'prime' in item:
+            isPrime = True
         request.raise_for_status()
         response = request.json()
         if len(response) > 0:
+            response = self.remove_glyphs(response)
             result = response[0]
-            if result['type'] == 'Rifle':
-                rifle = self.bot.get_cog('Rifle')
-                embedCard = await rifle.display(result)
-                await ctx.send(embed=embedCard)
-            elif result['type'] == 'Relic':
+            if result['category'] == 'Primary':
+                if result['type'] == 'Bow':
+                    bow = self.bot.get_cog('Bow')
+                    embedCard = await bow.display(result, isPrime)
+                    await ctx.send(embed=embedCard)
+                else:
+                    rifle = self.bot.get_cog('Rifle')
+                    embedCard = await rifle.display(result, isPrime)
+                    await ctx.send(embed=embedCard)
+            elif result['category'] == 'Relics':
                 relic = self.bot.get_cog('Relic')
                 embedCard = await relic.display(result)
                 await ctx.send(embed=embedCard)
-            elif result['type'] == 'Arcane':
+            elif result['category'] == 'Arcanes':
                 arcane = self.bot.get_cog('Arcane')
                 embedCard = await arcane.display(result)
                 await ctx.send(embed=embedCard)
-            elif result['type'] == 'Warframe':
+            elif result['category'] == 'Warframes':
                 warframe = self.bot.get_cog('Frame')
-                embedCard = await warframe.display(result)
+                embedCard = await warframe.display(result, isPrime)
                 await ctx.send(embed=embedCard)
-            elif result['type'] == 'Melee':
+            elif result['category'] == 'Melee':
                 melee = self.bot.get_cog('Melee')
-                embedCard = await melee.display(result)
+                embedCard = await melee.display(result, isPrime)
                 await ctx.send(embed=embedCard)
+            elif result['category'] == 'Sentinels':
+                sentinel = self.bot.get_cog('Sentinel')
+                embedCard = await sentinel.display(result, isPrime)
+                await ctx.send(embed=embedCard)
+            elif result['category'] == 'Mods':
+                mods = self.bot.get_cog('Mods')
+                embedCard = await mods.display(result)
+                await ctx.send(embed=embedCard)
+
+            else:
+                await ctx.send("Give it time, I will display your result")
 
         else:
             await ctx.send(f"No results found for the item {item}")
@@ -196,12 +220,10 @@ class Rifle(commands.Cog):
             weaponDamageValue += f"**{damageType.title()}**: {damageValue} \n"
         return weaponDamageValue
 
-    async def display(self, result):
+    async def display(self, result, isPrime):
         embedCard = discord.Embed(title=f"{result['name']}", description=f"{result['description']}",
                                   url=result['wikiaUrl'])
         embedCard.set_thumbnail(url=result['wikiaThumbnail'])
-        components = self.filter_components(result['components'])
-        dropLocations = self.get_drop_locations(components)
         embedCard.add_field(name="Mastery Rank", value=result['masteryReq'], inline=True)
         embedCard.add_field(name="Build Price", value=result['buildPrice'], inline=True)
         embedCard.add_field(name="Build Time", value=f"{result['buildTime'] // 60 // 60} hrs", inline=True)
@@ -209,14 +231,28 @@ class Rifle(commands.Cog):
         embedCard.add_field(name=f"Damage", value=self.get_weapon_damage(result['damageTypes']), inline=False)
         embedCard.add_field(name=f"Build Requirements", value=self.get_build_requirements(result['components']),
                             inline=False)
-        embedCard.add_field(name=f"Drop Locations", value=', '.join(dropLocations), inline=False)
+        if isPrime:
+            components = self.filter_components(result['components'])
+            dropLocations = self.get_drop_locations(components)
+            embedCard.add_field(name=f"Drop Locations", value=', '.join(dropLocations), inline=False)
         return embedCard
 
 
 class Melee(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.componentsName = ['Argon Crystal', 'Auroxium Alloy', 'Blueprint', 'Hespazym Alloy', 'Kuva', '']
+        self.componentsName = ['Barrel', 'Blueprint', 'Receiver', 'Stock', 'Chain', 'Handle']
+
+    def filter_components(self, components):
+        return list(filter(lambda x: x['name'] in self.componentsName, components))
+
+    @staticmethod
+    def get_drop_locations(components):
+        dropLocations = []
+        for component in components:
+            if 'drops' in component:
+                dropLocations.extend(list(map(lambda x: ' '.join(x['location'].split(' ')[:-1]), component['drops'])))
+        return sorted(set(dropLocations))
 
     @staticmethod
     def get_weapon_damage(damageTypes):
@@ -232,7 +268,7 @@ class Melee(commands.Cog):
             buildRequirementsValue += f"**{component['name']}:** {component['itemCount']}\n"
         return buildRequirementsValue
 
-    async def display(self, result):
+    async def display(self, result, isPrime):
         embedCard = discord.Embed(title=f"{result['name']}", description=f"{result['description']}",
                                   url=result['wikiaUrl'])
         embedCard.set_thumbnail(url=result['wikiaThumbnail'])
@@ -243,6 +279,10 @@ class Melee(commands.Cog):
         embedCard.add_field(name=f"Damage", value=self.get_weapon_damage(result['damageTypes']), inline=False)
         embedCard.add_field(name=f"Build Requirements", value=self.get_build_requirements(result['components']),
                             inline=False)
+        if isPrime:
+            components = self.filter_components(result['components'])
+            dropLocations = self.get_drop_locations(components)
+            embedCard.add_field(name=f"Drop Locations", value=', '.join(dropLocations), inline=False)
 
         return embedCard
 
@@ -319,23 +359,151 @@ class Frame(commands.Cog):
 
         return frameAttributesValues
 
-    async def display(self, result):
+    @staticmethod
+    def get_build_requirements(components):
+        buildRequirementsValue = " "
+        for component in components:
+            buildRequirementsValue += f"**{component['name']}:** {component['itemCount']}\n"
+        return buildRequirementsValue
+
+    async def display(self, result, isPrime):
         embedCard = discord.Embed(title=f"{result['name']}", description=f"{result['description']}",
                                   url=result['wikiaUrl'])
         embedCard.set_thumbnail(url=result['wikiaThumbnail'])
-        components = self.filter_components(result['components'])
-        dropLocations = self.get_drop_locations(components)
         embedCard.add_field(name="Passive Ability", value=result['passiveDescription'], inline=False)
         embedCard.add_field(name="Attributes", value=self.get_frame_attributes(result), inline=False)
         embedCard.add_field(name="Mastery Rank", value=result['masteryReq'], inline=True)
+        embedCard.add_field(name="Abilities", value=self.get_abilities(result['abilities']), inline=False)
+        if 'components' in result:
+            embedCard.add_field(name="Build Price", value=result['buildPrice'], inline=True)
+            embedCard.add_field(name="Build Time", value=f"{result['buildTime'] // 60 // 60} hrs", inline=True)
+            embedCard.add_field(name=f"Build Requirements", value=self.get_build_requirements(result['components']),
+                                inline=False)
+        if isPrime and 'components' in result:
+            components = self.filter_components(result['components'])
+            dropLocations = self.get_drop_locations(components)
+            embedCard.add_field(name=f"Drop Locations", value=', '.join(dropLocations), inline=False)
+        return embedCard
+
+
+class Sentinel(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.componentsName = ['Blueprint', 'Carapace', 'Cerebrum', 'Systems']
+
+    def filter_components(self, components):
+        return list(filter(lambda x: x['name'] in self.componentsName, components))
+
+    @staticmethod
+    def get_drop_locations(components):
+        dropLocations = []
+        for component in components:
+            if 'drops' in component:
+                dropLocations.extend(list(map(lambda x: ' '.join(x['location'].split(' ')[:-1]), component['drops'])))
+        return sorted(set(dropLocations))
+
+    @staticmethod
+    def get_build_requirements(components):
+        buildRequirementsValue = " "
+        for component in components:
+            buildRequirementsValue += f"**{component['name']}:** {component['itemCount']}\n"
+        return buildRequirementsValue
+
+    @staticmethod
+    def get_frame_attributes(result):
+        frameAttributesValues = ""
+        frameAttributesValues += f"**Health**: {result['health']}\n"
+        frameAttributesValues += f"**Shield**: {result['shield']}\n"
+        frameAttributesValues += f"**Armor**: {result['armor']}\n"
+        frameAttributesValues += f"**Stamina**: {result['stamina']}\n"
+        frameAttributesValues += f"**Power**: {result['power']}\n"
+
+        return frameAttributesValues
+
+    async def display(self, result, isPrime):
+        embedCard = discord.Embed(title=f"{result['name']}", description=f"{result['description']}")
+        if 'masteryReq' in result:
+            embedCard.add_field(name="Mastery Rank", value=result['masteryReq'], inline=True)
         embedCard.add_field(name="Build Price", value=result['buildPrice'], inline=True)
         embedCard.add_field(name="Build Time", value=f"{result['buildTime'] // 60 // 60} hrs", inline=True)
-        embedCard.add_field(name="Abilities", value=self.get_abilities(result['abilities']), inline=False)
+        embedCard.add_field(name="Attributes", value=self.get_frame_attributes(result), inline=False)
+        embedCard.add_field(name=f"Build Requirements", value=self.get_build_requirements(result['components']),
+                            inline=False)
+        if isPrime:
+            components = self.filter_components(result['components'])
+            dropLocations = self.get_drop_locations(components)
+            embedCard.add_field(name=f"Drop Locations", value=', '.join(dropLocations), inline=False)
+        return embedCard
+
+
+class Bow(commands.Cog):
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.componentsName = ['Blueprint', 'Grip', 'Lower Limb', 'String', 'Upper Limb']
+
+    @staticmethod
+    def get_weapon_damage(damageTypes):
+        weaponDamageValue = " "
+        for damageType, damageValue in damageTypes.items():
+            weaponDamageValue += f"**{damageType.title()}**: {damageValue} \n"
+        return weaponDamageValue
+
+    def filter_components(self, components):
+        return list(filter(lambda x: x['name'] in self.componentsName, components))
+
+    @staticmethod
+    def get_drop_locations(components):
+        dropLocations = []
         for component in components:
-            componentValue = f"**SellingPrice:** {component['primeSellingPrice']} \n " \
-                             f"**ItemCount:** {component['itemCount']}"
-            embedCard.add_field(name=f"{component['name']}", value=componentValue, inline=True)
-        embedCard.add_field(name=f"Drop Locations", value=', '.join(dropLocations), inline=False)
+            if 'drops' in component:
+                dropLocations.extend(list(map(lambda x: ' '.join(x['location'].split(' ')[:-1]), component['drops'])))
+        return sorted(set(dropLocations))
+
+    @staticmethod
+    def get_build_requirements(components):
+        buildRequirementsValue = " "
+        for component in components:
+            buildRequirementsValue += f"**{component['name']}:** {component['itemCount']}\n"
+        return buildRequirementsValue
+
+    async def display(self, result, isPrime):
+        embedCard = discord.Embed(title=f"{result['name']}", description=f"{result['description']}",
+                                  url=result['wikiaUrl'])
+        embedCard.set_thumbnail(url=result['wikiaThumbnail'])
+        embedCard.add_field(name="Mastery Rank", value=result['masteryReq'], inline=True)
+        if 'buildPrice' in result:
+            embedCard.add_field(name="Build Price", value=result['buildPrice'], inline=True)
+        if 'buildTime' in result:
+            embedCard.add_field(name="Build Time", value=f"{result['buildTime'] // 60 // 60} hrs", inline=True)
+        embedCard.add_field(name="Riven Deposition", value=result['disposition'], inline=True)
+        embedCard.add_field(name=f"Damage", value=self.get_weapon_damage(result['damageTypes']), inline=False)
+        if 'components' in result:
+            embedCard.add_field(name=f"Build Requirements", value=self.get_build_requirements(result['components']),
+                                inline=False)
+        if isPrime and 'components' in result:
+            components = self.filter_components(result['components'])
+            dropLocations = self.get_drop_locations(components)
+            embedCard.add_field(name=f"Drop Locations", value=', '.join(dropLocations), inline=False)
+        return embedCard
+
+
+class Mods(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @staticmethod
+    def get_drop_locations(drops):
+        dropValue = ''
+        for drop in drops:
+            for key, values in drop.items():
+                dropValue += f"**{key}:** {values}\n"
+            dropValue += '\n'
+        return dropValue
+
+    async def display(self, result):
+        embedCard = discord.Embed(title=f"{result['name']}", description=f"{result['description']}")
+        embedCard.add_field(name=f"Drop Locations", value=self.get_drop_locations(result['drops']), inline=False)
         return embedCard
 
 
@@ -346,3 +514,6 @@ def setup(bot):
     bot.add_cog(Relic(bot))
     bot.add_cog(Arcane(bot))
     bot.add_cog(Frame(bot))
+    bot.add_cog(Sentinel(bot))
+    bot.add_cog(Bow(bot))
+    bot.add_cog(Mods(bot))
