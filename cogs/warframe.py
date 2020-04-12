@@ -317,11 +317,23 @@ class Arcane(commands.Cog):
             i += 1
         return statsValues
 
+    @staticmethod
+    def get_drop_locations(drops):
+        dropValue = ''
+        for drop in drops:
+            for key, values in drop.items():
+                dropValue += f"**{key.title()}:** {values}\n"
+            dropValue += '\n'
+        return dropValue
+
     async def display(self, result):
         embedCard = discord.Embed(title=f"{result['name']}")
-        embedCard.add_field(name="Rarity", value=result['rarity'], inline=False)
+        if 'rarity' in result:
+            embedCard.add_field(name="Rarity", value=result['rarity'], inline=False)
         statsValue = self.get_stats(result['levelStats'])
         embedCard.add_field(name="Stats", value=statsValue, inline=True)
+        if 'drops' in result:
+            embedCard.add_field(name=f"Drop Locations", value=self.get_drop_locations(result['drops']), inline=False)
         return embedCard
 
 
@@ -497,7 +509,7 @@ class Mods(commands.Cog):
         dropValue = ''
         for drop in drops:
             for key, values in drop.items():
-                dropValue += f"**{key}:** {values}\n"
+                dropValue += f"**{key.title()}:** {values}\n"
             dropValue += '\n'
         return dropValue
 
