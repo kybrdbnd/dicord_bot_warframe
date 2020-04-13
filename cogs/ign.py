@@ -9,7 +9,7 @@ def check_user(ctx):
 
 
 class IGN(commands.Cog, name='In-Game Name'):
-    def __init(self, bot):
+    def __init__(self, bot):
         self.bot = bot
 
     @commands.group(help='IGN Commands')
