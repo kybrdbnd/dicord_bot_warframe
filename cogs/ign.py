@@ -8,9 +8,10 @@ def check_user(ctx):
     return ctx.message.author.id == int(USER_ID)  # only pucci can do it
 
 
-class IGN(commands.Cog, name='In-Game Name'):
-    def __init(self, bot):
+class Ign(commands.Cog):
+    def __init__(self, bot):
         self.bot = bot
+        self.name = 'Pranav'
 
     @commands.group(help='IGN Commands')
     async def ign(self, ctx):
@@ -99,4 +100,4 @@ class IGN(commands.Cog, name='In-Game Name'):
 
 
 def setup(bot):
-    bot.add_cog(IGN(bot))
+    bot.add_cog(Ign(bot))
