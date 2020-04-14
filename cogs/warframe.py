@@ -9,6 +9,7 @@ class Warframe(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.stupidItems = ['Glyph', 'Ship Decoration']
 
     @commands.group(name='wi', help='Warframe Helpers')
     async def warframe(self, ctx):
@@ -118,9 +119,8 @@ class Warframe(commands.Cog):
 
         await ctx.send(embed=embedCard)
 
-    @staticmethod
-    def remove_glyphs(result):
-        return list(filter(lambda x: x['type'] != 'Glyph', result))
+    def remove_stupid_items(self, result):
+        return list(filter(lambda x: x['type'] not in self.stupidItems, result))
 
     @warframe.command(name='search', help='search for any item', usage='<item name>')
     async def search(self, ctx, item: str):
@@ -131,7 +131,7 @@ class Warframe(commands.Cog):
         request.raise_for_status()
         response = request.json()
         if len(response) > 0:
-            response = self.remove_glyphs(response)
+            response = self.remove_stupid_items(response)
             result = response[0]
             if result['category'] == 'Primary':
                 if result['type'] == 'Bow':
