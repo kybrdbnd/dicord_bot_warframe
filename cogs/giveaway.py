@@ -1,12 +1,20 @@
+import random
 from datetime import datetime
 import discord
 from discord.ext import commands
 from cogs.utils.constants import *
-from .utils import util
+
+
+def filter_users(users):
+    return list(filter(lambda x: x.bot is False, users))
 
 
 def check_user(ctx):
     return ctx.message.author.id == int(USER_ID)  # only pucci can do it
+
+
+def get_giveaway_winner(members: commands.Greedy[discord.Member]):
+    return random.choice(members)
 
 
 class Giveaway(commands.Cog):
@@ -73,8 +81,8 @@ class Giveaway(commands.Cog):
             if 'winner' in lastGiveawayDoc:
                 await ctx.send("Create a new giveaway, winner already decided for last giveaway")
             else:
-                users = util.filter_users(self.bot.get_all_members())
-                giveawayWinner = util.get_giveaway_winner(users)
+                users = filter_users(self.bot.get_all_members())
+                giveawayWinner = get_giveaway_winner(users)
 
                 collection.update({'_id': lastGiveawayDoc['_id']},
                                   {'$set': {'winner': giveawayWinner.name,

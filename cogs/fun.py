@@ -1,7 +1,7 @@
 import random
 import discord
 from discord.ext import commands
-from .utils import roast_quotes, simaris_quotes
+from .utils import quotes
 
 
 class Fun(commands.Cog):
@@ -12,7 +12,7 @@ class Fun(commands.Cog):
     @commands.command(name='roast', help='roast your team members')
     async def roast(self, ctx, members: commands.Greedy[discord.Member]):
         if len(members) > 0:
-            q = roast_quotes.quotes
+            q = quotes.roast_quotes
             message = random.choice(q)
             await ctx.send(message)
         else:
@@ -31,7 +31,7 @@ class Fun(commands.Cog):
 
     @commands.command(name='quotes', help='cephalon simaris quotes')
     async def quotes(self, ctx):
-        q = simaris_quotes.quotes
+        q = quotes.simaris_quotes
         message = random.choice(q)
         await ctx.send(message)
 
