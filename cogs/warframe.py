@@ -288,12 +288,15 @@ class Relic(commands.Cog):
     @staticmethod
     async def display(result):
         embedCard = discord.Embed(title=f"{result['name']}", description=f"{result['description']}")
-        for dropLocation in result['drops'][:30]:
-            dropLocationValue = f"**Type:** {dropLocation['type']}   \n    **Rarity:** {dropLocation['rarity']} \n " \
-                                f"**Chance:** {dropLocation['chance']}"
-            if 'rotation' in dropLocation:
-                dropLocationValue += f"\n **Rotation:** {dropLocation['rotation']}"
-            embedCard.add_field(name=f"{dropLocation['location']}", value=dropLocationValue, inline=True)
+        if 'drops' in result:
+            for dropLocation in result['drops'][:30]:
+                dropLocationValue = f"**Type:** {dropLocation['type']}   \n    **Rarity:** {dropLocation['rarity']} \n " \
+                                    f"**Chance:** {dropLocation['chance']}"
+                if 'rotation' in dropLocation:
+                    dropLocationValue += f"\n **Rotation:** {dropLocation['rotation']}"
+                embedCard.add_field(name=f"{dropLocation['location']}", value=dropLocationValue, inline=True)
+        else:
+            embedCard.add_field(name="Vaulted", value="True", inline=True)
         return embedCard
 
 
