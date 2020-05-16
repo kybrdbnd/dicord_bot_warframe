@@ -43,7 +43,7 @@ class Warframe(commands.Cog):
         await ctx.send(embed=embedCard)
 
     @warframe.command(name='farm', help='Display preferred place to farm for resources',
-                      usage='<resource name> plastids|oxium|neurodes|neural sensor|hexenon|polymer bundle|argon crystal|gallium')
+                      usage='<resource name> plastids|oxium|neurodes|neural sensor|hexenon|polymer bundle|argon crystal|gallium|orokin cell')
     async def farm_resources(self, ctx, item: str):
         currentDirectory = os.path.dirname(os.path.abspath(__file__))
         itemDirectory = os.path.join(currentDirectory, "utils", "warframe_items", "farm.json")
@@ -53,7 +53,8 @@ class Warframe(commands.Cog):
             itemJson = items_farm_json[item]
             embedCard = discord.Embed(title=f'{item.title()}')
             embedCard.add_field(name='Best Location', value=itemJson['BestLocationName'], inline=False)
-            embedCard.add_field(name='Other Locations', value=', '.join(itemJson['OtherLocations']), inline=False)
+            if len(itemJson['OtherLocations']) > 0:
+                embedCard.add_field(name='Other Locations', value=', '.join(itemJson['OtherLocations']), inline=False)
             await ctx.send(embed=embedCard)
         else:
             await ctx.send("We are adding the resource that you requested")
