@@ -1,20 +1,18 @@
- {
+{
     "plastids": {
         "BestLocationName": "Piscinas, Saturn",
         "OtherLocations": [
-            "Saturn",
-            "Uranus",
+            "Ophelia (Uranus)",
             "Phobos",
             "Pluto",
-            "Eris"
+            "Akkad (Eris)"
         ]
     },
     "oxium": {
         "BestLocationName": "IO, Jupiter",
         "OtherLocations": [
             "Outer Terminus (Pluto)",
-            "Corpus Excavations",
-            "Corpus Survival"
+            "Gulliver (Phobos)"
         ]
     },
     "neurodes": {
@@ -27,7 +25,7 @@
     "neural sensor": {
         "BestLocationName": "Elara and Sinai, Jupiter",
         "OtherLocations": [
-            "Taveuni, Kuva Fortress"
+            "Taveuni (Kuva Fortress)"
         ]
     },
     "hexenon": {
@@ -37,11 +35,11 @@
     "polymer bundle": {
         "BestLocationName": "Assur, Uranus",
         "OtherLocations": [
-            "Venus",
+            "Ophelia (Uranus)",
             "Mercury"
         ]
     },
-     "argon crystal": {
+    "argon crystal": {
         "BestLocationName": "Mot, Void",
         "OtherLocations": [
             "Ani (Void)",
@@ -52,6 +50,13 @@
         "BestLocationName": "Kadesh, Mars",
         "OtherLocations": [
             "Mars nodes"
+        ]
+    },
+    "orokin cell": {
+        "BestLocationName": "Gabii, Ceres",
+        "OtherLocations": [
+            "Helen (Saturn)",
+            "Telesto (Saturn)"
         ]
     }
 }
