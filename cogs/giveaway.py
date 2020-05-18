@@ -1,5 +1,5 @@
 import random
-from datetime import datetime
+from datetime import datetime, timedelta
 import discord
 from discord.ext import commands
 from cogs.utils.constants import *
@@ -13,10 +13,6 @@ def check_user(ctx):
     return ctx.message.author.id == int(USER_ID)  # only pucci can do it
 
 
-def get_giveaway_winner(members: commands.Greedy[discord.Member]):
-    return random.choice(members)
-
-
 class Giveaway(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -28,7 +24,7 @@ class Giveaway(commands.Cog):
 
     @giveaway.command(name='start', help='Start Giveaway', hidden=True)
     @commands.check(check_user)
-    async def giveaway_start(self, ctx, condition: str):
+    async def giveaway_start(self, ctx, price: str):
         collection = db[GIVEAWAY_COLLECTION_NAME]
         giveawayDocs = list(collection.find({}).sort('createdOn', -1))
         newGiveaway = False
@@ -39,35 +35,22 @@ class Giveaway(commands.Cog):
             if 'winner' in giveawayDoc:
                 newGiveaway = True
             else:
-                await ctx.send(f"winner still to be decided for giveaway -> {giveawayDoc['condition']}")
+                await ctx.send(f"winner still to be decided for giveaway -> {giveawayDoc['price']}")
         if newGiveaway:
             giveawayJSON = {
-                'condition': condition,
                 'startAt': datetime.now().strftime("%Y-%m-%d"),
+                'price': price,
                 'updatedOn': datetime.now(),
                 'createdOn': datetime.now(),
                 'onGoing': True
             }
             collection.insert(giveawayJSON)
+        giveawayAnnouncementDate = datetime.now() + timedelta(days=6)
+        giveawayChannel = self.bot.get_channel(int(GIVEAWAY_CHANNEL_ID))
+        await giveawayChannel.send(
+            f"Let's get excited with a giveaway! React to this post for a chance to win {price}. "
+            f"Winner will be picked on {giveawayAnnouncementDate.strftime('%B %e')} at 6 PM IST")
         await ctx.send("Giveaway started successfully!!!")
-
-    @giveaway.command(name='price', help='Giveaway Price', usage='<price>', hidden=True)
-    @commands.check(check_user)
-    async def price(self, ctx, giveaway_price: str):
-        collection = db[GIVEAWAY_COLLECTION_NAME]
-
-        giveawayDocs = list(collection.find({}).sort('createdOn', -1))
-        if len(giveawayDocs) > 0:
-            giveawayDoc = giveawayDocs[0]
-            if 'winner' not in giveawayDoc:
-                collection.update({'_id': giveawayDoc['_id']},
-                                  {'$set': {'price': giveaway_price, 'updatedOn': datetime.now()}}, upsert=True)
-                await ctx.send("price updated")
-            else:
-                await ctx.send(
-                    "Cannot modify price now, winner already declared for last giveaway. Start a new giveaway")
-        else:
-            await ctx.send("No Giveaway found!!!")
 
     @giveaway.command(name='winner', help='Decide Giveaway winner', hidden=True)
     @commands.check(check_user)
@@ -81,16 +64,24 @@ class Giveaway(commands.Cog):
             if 'winner' in lastGiveawayDoc:
                 await ctx.send("Create a new giveaway, winner already decided for last giveaway")
             else:
-                users = filter_users(self.bot.get_all_members())
-                giveawayWinner = get_giveaway_winner(users)
-
+                giveaway_message = await channel.history(limit=2).flatten()
+                giveaway_message = giveaway_message[1]
+                totalReactions = giveaway_message.reactions
+                usersReacted = []
+                for reaction in totalReactions:
+                    usersReacted.extend(await reaction.users().flatten())
+                userIds = list(map(lambda x: x.id, usersReacted))
+                uniqueUserIds = list(set(userIds))
+                winnerId = random.choice(uniqueUserIds)
+                giveawayWinner = self.bot.get_user(winnerId)
                 collection.update({'_id': lastGiveawayDoc['_id']},
                                   {'$set': {'winner': giveawayWinner.name,
                                             'winner_id': giveawayWinner.id,
                                             'onGoing': False,
                                             'updatedOn': datetime.now()}}, upsert=True)
 
-                await channel.send(f"Congratulations {giveawayWinner.mention} for winning {lastGiveawayDoc['price']}")
+                await channel.send(f"Congratulations {giveawayWinner.mention} for winning {lastGiveawayDoc['price']}."
+                                   f" ***Please ensure you have DMs from server members enabled!***")
         else:
             await ctx.send("No giveaways found!!!")
 
@@ -102,7 +93,7 @@ class Giveaway(commands.Cog):
         giveawayDocs = list(collection.find({'onGoing': True}).sort('createdOn', -1))
         if len(giveawayDocs) > 0:
             lastGiveawayDoc = giveawayDocs[0]
-            embedCard = discord.Embed(title="Giveaway!!!", description=lastGiveawayDoc['condition'])
+            embedCard = discord.Embed(title="Giveaway!!!")
             if 'price' in lastGiveawayDoc:
                 giveawayPrice = lastGiveawayDoc['price']
             if 'winner' in lastGiveawayDoc:
@@ -124,7 +115,7 @@ class Giveaway(commands.Cog):
                     lastGiveawayDoc = doc
                     break
             if lastGiveawayDoc is not None:
-                embedCard = discord.Embed(title="Giveaway!!!", description=lastGiveawayDoc['condition'])
+                embedCard = discord.Embed(title="Giveaway!!!")
                 giveawayPrice = lastGiveawayDoc['price']
                 winner = self.bot.get_user(lastGiveawayDoc['winner_id']).name
                 embedCard.add_field(name='Winner', value=winner, inline=True)
@@ -135,38 +126,8 @@ class Giveaway(commands.Cog):
         else:
             await ctx.send("No giveaways found!!!")
 
-    @giveaway.command(name='alert', help='alert giveaway info', hidden=True)
-    @commands.check(check_user)
-    async def giveaway_alert(self, ctx):
-        channel = self.bot.get_channel(int(GIVEAWAY_CHANNEL_ID))
-
-        collection = db[GIVEAWAY_COLLECTION_NAME]
-        giveawayPrice = "No price decided yet"
-        winner = "No winner decided yet"
-        giveawayDocs = list(collection.find({'onGoing': True}).sort('createdOn', -1))
-        if len(giveawayDocs) > 0:
-            lastGiveawayDoc = giveawayDocs[0]
-            embedCard = discord.Embed(title="Giveaway!!!", description=lastGiveawayDoc['condition'])
-            if 'price' in lastGiveawayDoc:
-                giveawayPrice = lastGiveawayDoc['price']
-            if 'winner' in lastGiveawayDoc:
-                winner = self.bot.get_user(lastGiveawayDoc['winner_id']).name
-            embedCard.add_field(name='Winner', value=winner, inline=True)
-            embedCard.add_field(name='Price', value=giveawayPrice, inline=True)
-            await channel.send("Giveaway alert!!!! @everyone")
-            await channel.send(embed=embedCard)
-        else:
-            await ctx.send("No giveaways found!!!")
-
     @giveaway_start.error
     async def giveaway_start_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send('Provide the condition')
-        elif isinstance(error, commands.CheckFailure):
-            await ctx.send('You are not authorized')
-
-    @price.error
-    async def price_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send('Provide the price')
         elif isinstance(error, commands.CheckFailure):
