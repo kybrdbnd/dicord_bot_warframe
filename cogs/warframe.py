@@ -306,19 +306,11 @@ class Arcane(commands.Cog):
         self.bot = bot
 
     @staticmethod
-    def get_stats(levelStats):
-        statsValues = " "
-        i = 0
-        for stat in levelStats:
-            statsValues += f"**Level {i + 1}**: {stat['stats'][0]}\n"
-            i += 1
-        return statsValues
-
-    async def display(self, result):
+    async def display(result):
         embedCard = discord.Embed(title=f"{result['name']}")
         if 'rarity' in result:
             embedCard.add_field(name="Rarity", value=result['rarity'], inline=False)
-        statsValue = self.get_stats(result['levelStats'])
+        statsValue = get_stats(result['levelStats'])
         embedCard.add_field(name="Stats", value=statsValue, inline=True)
         if 'drops' in result:
             embedCard.add_field(name=f"Drop Locations", value=get_drop_locations(result['drops']), inline=False)
@@ -449,9 +441,16 @@ class Mods(commands.Cog):
 
     @staticmethod
     async def display(result):
-        embedCard = discord.Embed(title=f"{result['name']}", description=f"{result['description']}")
+        description = 'Description Not available'
+        if 'description' in result:
+            description = result['description']
+        embedCard = discord.Embed(title=f"{result['name']}", description=f"{description}")
         if 'drops' in result:
-            embedCard.add_field(name=f"Drop Locations", value=get_drop_locations(result['drops']), inline=False)
+            dropValues = get_drop_locations(result['drops'])
+            embedCard.add_field(name="Drop Locations", value=dropValues, inline=False)
+        if 'levelStats' in result:
+            statsValue = get_stats(result['levelStats'])
+            embedCard.add_field(name="Stats", value=statsValue, inline=True)
         return embedCard
 
 

@@ -8,7 +8,7 @@ def get_relics_drop_locations(components):
 
 def get_drop_locations(drops):
     dropValue = ''
-    for drop in drops:
+    for drop in drops[:-5]:
         for key, values in drop.items():
             dropValue += f"**{key.title()}:** {values}\n"
         dropValue += '\n'
@@ -20,3 +20,12 @@ def get_build_requirements(components):
     for component in components:
         buildRequirementsValue += f"**{component['name']}:** {component['itemCount']}\n"
     return buildRequirementsValue
+
+
+def get_stats(levelStats):
+    statsValues = " "
+    i = 0
+    for stat in levelStats:
+        statsValues += f"**Level {i + 1}**: {', '.join(stat['stats'])}\n"
+        i += 1
+    return statsValues
