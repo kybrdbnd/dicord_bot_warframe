@@ -8,7 +8,7 @@ def get_relics_drop_locations(components):
 
 def get_drop_locations(drops):
     dropValue = ''
-    for drop in drops[:-5]:
+    for drop in drops[:5]:
         for key, values in drop.items():
             dropValue += f"**{key.title()}:** {values}\n"
         dropValue += '\n'
