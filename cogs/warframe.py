@@ -1,4 +1,6 @@
 import json
+from datetime import datetime
+
 import requests
 import discord
 from discord.ext import commands
@@ -135,6 +137,22 @@ class Warframe(commands.Cog):
             description = f"**Coming on:** {newDt.strftime('%A, %d %B %H:%M')}"
 
             embedCard = discord.Embed(title=f"{response['character']}, {response['location']}", description=description)
+
+        await ctx.send(embed=embedCard)
+
+    @warframe.command(name='arbi', help='Display Arbitration status')
+    async def get_arbitration(self, ctx):
+        request = requests.get('https://api.warframestat.us/pc/arbitration')
+        request.raise_for_status()
+        response = request.json()
+        embedCard = discord.Embed(title="Arbitration")
+        embedCard.add_field(name="Enemy", value=response['enemy'], inline=True)
+        embedCard.add_field(name="Type", value=response['type'], inline=True)
+        embedCard.add_field(name="Node", value=response['node'], inline=False)
+        currentTime = datetime.now().astimezone(timeZone)
+        arbiTime = parser.parse(response['expiry']).astimezone(timeZone)
+        timediff = (arbiTime - currentTime).seconds
+        embedCard.add_field(name="TimeLeft", value=f"{timediff // 60} mins", inline=False)
 
         await ctx.send(embed=embedCard)
 
