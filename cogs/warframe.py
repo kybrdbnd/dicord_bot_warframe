@@ -156,6 +156,22 @@ class Warframe(commands.Cog):
 
         await ctx.send(embed=embedCard)
 
+    @warframe.command(name='nw', help='Display Nightwave Missions')
+    async def get_nw(self, ctx):
+        request = requests.get('https://api.warframestat.us/pc/nightwave')
+        request.raise_for_status()
+        response = request.json()
+        embedCard = discord.Embed(title="NightWave Missions")
+        if response['active']:
+            for challenge in response['activeChallenges']:
+                variantValue = f"**Description:** {challenge['desc']} \n " \
+                               f"**Reputation:** {challenge['reputation']}"
+                embedCard.add_field(name=f'{challenge["title"]}', value=variantValue, inline=True)
+
+        else:
+            embedCard = discord.Embed(title="Nightwave Ended")
+        await ctx.send(embed=embedCard)
+
     def remove_stupid_items(self, result):
         return list(filter(lambda x: x['type'] not in self.stupidItems, result))
 
