@@ -177,6 +177,7 @@ class Warframe(commands.Cog):
 
     @warframe.command(name='search', help='search for any item', usage='<item name>')
     async def search(self, ctx, item: str):
+        item = item.lower()
         request = requests.get(f'https://api.warframestat.us/items/search/{item}')
         isPrime = False
         if 'prime' in item:
