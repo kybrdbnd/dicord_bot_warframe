@@ -33,7 +33,7 @@ class Bot(commands.Bot):
         introductionChannel = self.get_channel(int(INTRODUCTION_CHANNEL_ID))
 
         if member.bot is False:
-            await generalChannel.send(f"Hunter {member.mention}, Welcome to Warframe India Community!!!!. "
+            await generalChannel.send(f"Hunter {member.mention}, Welcome to Warframe Lovers Community!!!!. "
                                       f"Make sure to go to <#{introductionChannel.id}> channel to introduce yourself")
 
 

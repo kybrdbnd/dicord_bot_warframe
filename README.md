@@ -1,10 +1,10 @@
-# Discord BOT (Warframe India) 
+# Discord BOT (Warframe Lovers India) 
 [![Discord](https://img.shields.io/static/v1?label=Warframe%20India&logo=discord&message=%3E50%20members&color=%237289DA&logoColor=white)](https://discord.gg/FQKc6q6)
 ![Python](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg)
 
 [![forthebadge made-with-python](http://ForTheBadge.com/images/badges/made-with-python.svg)](https://www.python.org/)
 
-Custom discord bot for Warframe India Community
+Custom discord bot for Warframe Lovers Community
 
 ### Build Status:
 
