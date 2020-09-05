@@ -33,14 +33,30 @@ class Warframe(commands.Cog):
             request = requests.get('https://api.warframestat.us/pc/cetusCycle')
         elif place == 'vallis':
             request = requests.get('https://api.warframestat.us/pc/vallisCycle')
+        elif place == 'infested':
+            request = requests.get('https://api.warframestat.us/pc/cambionCycle')
         else:
-            await ctx.send(f"Invalid cycle entered, valid values are cetus|vallis")
+            await ctx.send(f"Invalid cycle entered, valid values are cetus|vallis|infested")
         request.raise_for_status()
         response = request.json()
-        embedCard = discord.Embed(title=f'{place.title()} Cycle')
-        embedCard.add_field(name='Cycle', value=response['state'].title(), inline=True)
-        embedCard.add_field(name='timeleft', value=response['timeLeft'], inline=True)
-        embedCard.add_field(name='Next Cycle', value=response['shortString'], inline=False)
+        if place == 'infested':
+            embedCard = discord.Embed(title=f'{place.title()} Cycle')
+            embedCard.add_field(name='Cycle', value=response['active'].title(), inline=True)
+            cycleTimeLeft = parser.parse(response['expiry']).astimezone(timeZone)
+            currentTime = datetime.now().astimezone(timeZone)
+            timeDiff = (cycleTimeLeft - currentTime).total_seconds()
+            timeMinute = int(timeDiff // 60)
+            if response['active'] == 'fass':
+                nextCycle = 'Vome'
+            else:
+                nextCycle = 'Fass'
+            embedCard.add_field(name='Next Cycle', value=f'{timeMinute}m to {nextCycle}', inline=False)
+
+        else:
+            embedCard = discord.Embed(title=f'{place.title()} Cycle')
+            embedCard.add_field(name='Cycle', value=response['state'].title(), inline=True)
+            embedCard.add_field(name='timeleft', value=response['timeLeft'], inline=True)
+            embedCard.add_field(name='Next Cycle', value=response['shortString'], inline=False)
 
         await ctx.send(embed=embedCard)
 
